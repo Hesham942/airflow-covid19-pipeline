@@ -33,7 +33,7 @@ If you want to test or run this project on your own machine, follow these steps:
 
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/yourusername/airflow-covid19-data-pipeline.git
+git clone https://github.com/hesham942/airflow-covid19-data-pipeline.git
 cd airflow-covid19-data-pipeline
 ```
 
