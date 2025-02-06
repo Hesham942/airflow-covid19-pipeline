@@ -33,25 +33,30 @@ If you want to test or run this project on your own machine, follow these steps:
 
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/hesham942/airflow-covid19-data-pipeline.git
+git clone https://github.com/yourusername/airflow-covid19-data-pipeline.git
 cd airflow-covid19-data-pipeline
 ```
 
-### 2️⃣ Set Up Airflow
-Make sure you have **Docker** installed and running. Then, initialize Airflow using:
+### 2️⃣ Setting Up Apache Airflow
+During my learning process, I set up Airflow using **Docker Compose**. Instead of manually creating folders like `dags/`, `scripts/`, and others, I followed these steps to automate the setup:
+
+1. I copied the **Docker Compose** file from my instructor and placed it in my project directory.
+2. I created a `.env` file in the same directory with the following content:
+
 ```bash
-echo -e "AIRFLOW_UID=$(id -u)" > .env
-docker-compose up airflow-init
+AIRFLOW_IMAGE_NAME=apache/airflow:2.7.0
+AIRFLOW_UID=50000
 ```
 
-### 3️⃣ Start the Airflow Services
-Run the following command to start Airflow and its components:
-```bash
-docker-compose up
-```
-This will start the **PostgreSQL**, **Redis**, and **Airflow webserver, scheduler, and worker**.
+3. I ran the following command to start Airflow and automatically generate the required folders:
 
-### 4️⃣ Access the Airflow Web UI
+```bash
+docker-compose up -d
+```
+
+This command automatically created the necessary folders (`dags/`, `logs/`, `plugins/`, etc.), so I didn't have to set them up manually.
+
+### 3️⃣ Access the Airflow Web UI
 Once the setup is complete, you can access the **Airflow Web UI** by visiting:
 ```
 http://localhost:8080
@@ -60,7 +65,7 @@ Login with the default credentials:
 - **Username:** `airflow`
 - **Password:** `airflow`
 
-### 5️⃣ Trigger the DAG
+### 4️⃣ Trigger the DAG
 In the Airflow UI, enable and trigger the **COVID-19 Case Data Pipeline DAG** to start the workflow.
 
 ## 📈 Expected Output
