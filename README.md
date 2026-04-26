@@ -1,81 +1,81 @@
-# COVID-19 Case Data Cleansing & Modeling with Apache Airflow
+# COVID-19 Data Pipeline — Apache Airflow
 
-## 🚀 Project Overview
-I have recently completed my learning journey in **Apache Airflow** and applied my knowledge by working on a project: **COVID-19 Case Data Cleansing & Modeling**. This project is part of my hands-on learning approach to ensure I am on the right track while reinforcing my skills through practical implementation.
+An automated ETL pipeline that ingests, cleanses, and loads **950K+ data points** from the Johns Hopkins COVID-19 time-series datasets into a star-schema PostgreSQL database, orchestrated by Apache Airflow on a daily schedule.
 
-## 📌 Project Goals
-- Ingest raw COVID-19 case data.
-- Cleanse and preprocess the dataset.
-- Transform the data into a structured format suitable for analysis.
-- Automate the workflow using Apache Airflow.
+## Architecture
 
-## 🔧 Tech Stack
-- **Apache Airflow** (for workflow automation)
-- **Docker** (for containerized execution)
-- **PostgreSQL** (for data storage)
-- **Pandas** (for data manipulation)
-
-## 📂 Repository Structure
 ```
-📦 airflow-covid19-data-pipeline
- ┣ 📂 dags                 # Airflow DAGs (data pipeline workflows)
- ┣ 📂 scripts              # Custom scripts for data processing
- ┣ 📂 logs                 # Airflow logs
- ┣ 📂 plugins              # Airflow plugins (if any)
- ┣ 📄 .env                 # Environment variables (Airflow image & UID)
- ┣ 📄 airflow.cfg          # Airflow configuration file
- ┣ 📄 docker-compose.yaml  # Docker configuration for Airflow setup
- ┗ 📄 README.md            # Project documentation
+Johns Hopkins CSVs ──► fetch_data ──► process ──► create_table ──► load_to_postgres
+ (confirmed,                │            │              │                  │
+  deaths,              Download 3    Clean columns,  Create dim &     Insert into
+  recovered)           CSV files     reformat dates  fact tables      PostgreSQL
 ```
 
-## 🛠 How to Run the Project Locally
-If you want to test or run this project on your own machine, follow these steps:
+**Data source:** [JHU CSSE COVID-19 Dataset](https://github.com/CSSEGISandData/COVID-19) — 3 global time-series CSVs (confirmed, deaths, recovered), each with ~289 country/region rows and ~1,100 date columns.
 
-### 1️⃣ Clone the Repository
-```bash
-git clone https://github.com/hesham942/airflow-covid19-data-pipeline.git
-cd airflow-covid19-data-pipeline
-```
+## Pipeline Details
 
-### 2️⃣ Setting Up Apache Airflow
-During my learning process, I set up Airflow using **Docker Compose**. Instead of manually creating folders like `dags/`, `scripts/`, and others, I followed these steps to automate the setup:
+| Aspect | Detail |
+|---|---|
+| **DAG** | `covid-19-processing` |
+| **Schedule** | `@daily` |
+| **Tasks** | 4 (fetch → process → create tables → load) |
+| **Data volume** | ~950K+ data points per run |
+| **Storage model** | Star schema — `dim_location` + `fact_covid_cases` |
+| **Executor** | CeleryExecutor with Redis broker |
 
-1. I copied the **Docker Compose** file from my instructor and placed it in my project directory.
-2. I created a `.env` file in the same directory with the following content:
+### Task Breakdown
 
-```bash
-AIRFLOW_IMAGE_NAME=apache/airflow:2.7.0
-AIRFLOW_UID=50000
-```
+1. **`fetch_data`** — Downloads confirmed, deaths, and recovered CSV datasets from Johns Hopkins.
+2. **`process`** — Renames columns, fills missing province/state values, and converts date headers to `YYYY-MM-DD` format.
+3. **`create_table`** — Creates `dim_location` (dimension) and `fact_covid_cases` (fact) tables with referential integrity.
+4. **`load_to_postgres`** — Iterates through each dataset and date column, inserting records into the star-schema model.
 
-3. I ran the following command to start Airflow and automatically generate the required folders:
+## Tech Stack
+
+- **Apache Airflow 2.7.0** — Workflow orchestration
+- **PostgreSQL 13** — Data warehouse
+- **Redis** — Celery broker for task distribution
+- **Pandas** — Data manipulation and cleansing
+- **Docker Compose** — Containerized multi-service deployment
+
+## Getting Started
+
+### Prerequisites
+
+- Docker & Docker Compose
+- At least 4 GB RAM allocated to Docker
+
+### Run
 
 ```bash
+git clone https://github.com/Hesham942/airflow-covid19-pipeline.git
+cd airflow-covid19-pipeline
 docker-compose up -d
 ```
 
-This command automatically created the necessary folders (`dags/`, `logs/`, `plugins/`, etc.), so I didn't have to set them up manually.
+The Airflow UI will be available at `http://localhost:8080` (default credentials: `airflow` / `airflow` — local development only).
 
-### 3️⃣ Access the Airflow Web UI
-Once the setup is complete, you can access the **Airflow Web UI** by visiting:
+Enable and trigger the `covid-19-processing` DAG from the UI.
+
+## Project Structure
+
 ```
-http://localhost:8080
+airflow-covid19-pipeline/
+├── dags/
+│   └── covid-19.py          # DAG definition with 4 tasks
+├── logs/                     # Airflow task logs
+├── plugins/                  # Airflow plugins
+├── .env                      # Airflow image & UID config
+└── docker-compose.yaml       # Multi-container setup
 ```
-Login with the default credentials:
-- **Username:** `airflow`
-- **Password:** `airflow`
 
-### 4️⃣ Trigger the DAG
-In the Airflow UI, enable and trigger the **COVID-19 Case Data Pipeline DAG** to start the workflow.
+## Database Schema
 
-## 📈 Expected Output
-- The pipeline fetches COVID-19 case data.
-- Cleans and structures the data.
-- Stores the transformed data in PostgreSQL for further analysis.
+```sql
+-- Dimension table
+dim_location (id, country, state)
 
-## 🏆 Key Takeaways
-- **Gained hands-on experience** with Airflow DAGs and task dependencies.
-- **Improved data engineering skills** by automating ETL pipelines.
-- **Built a reusable Airflow setup** using Docker and PostgreSQL.
-
----
+-- Fact table
+fact_covid_cases (id, date, country, state, confirmed, deaths, recovered)
+```
